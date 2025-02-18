@@ -14,42 +14,54 @@ mongoose.connect(process.env.MONGO_URI).then(function () {
     console.log("Failed to connect DB")
 })
 
-const credentials = mongoose.model("credentials", {}, "bulkmail")
+const Credentials = mongoose.model("credentials", {}, "bulkmail")
 
-credentials.find().then(function (data) {
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: data[0].toJSON().user,
-            pass: data[0].toJSON().pass,
+app.post("/sendmail", async (req, res) => {
+    try {
+        const { mailList, msg } = req.body;
+        const data = await Credentials.find();
+        if (!data.length) {
+            return res.status(500).json({ error: "No email credentials found" });
         }
-    })
-    new Promise(async function (resolve, reject) {
-        try {
-            for (i = 0; i < mailList.length; i++) {
-                await transporter.sendMail({
-                    from: "swetha040725@gmail.com",
-                    to: mailList[i],
-                    subject: "A message from Bulk Mail App",
-                    text: msg
-                })
-                console.log("Email sent to: " + mailList[i])
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: data[0].toJSON().user,
+                pass: data[0].toJSON().pass,
             }
-            resolve("Success")
-        }
-        catch {
-            reject("Failed")
-        }
-    }).then(function () {
-        res.send(true)
-    }).catch(function () {
-        console.log(false)
-    })
-}).catch(function (error) {
-    console.log(error)
-})
+        });
+        new Promise(async (resolve, reject) => {
+            try {
+                for (let i = 0; i < mailList.length; i++) {
+                    await transporter.sendMail({
+                        from: data[0].toJSON().user,
+                        to: mailList[i],
+                        subject: "A message from Bulk Mail App",
+                        text: msg
+                    });
+                    console.log("Email sent to: " + mailList[i]);
+                }
+                resolve("Success");
+            } catch (error) {
+                reject("Failed");
+            }
+        })
+            .then(() => {
+                res.send(true);
+            })
+            .catch(() => {
+                res.status(500).send(false);
+            });
+    } catch (error) {
+        console.error("Error sending emails:", error);
+        res.status(500).json({ success: false, message: "Failed to send emails" });
+    }
+});
 
-app.listen(process.env.PORT, function () {
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, function () {
     console.log("Server started...")
 })
 
