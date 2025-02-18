@@ -8,15 +8,15 @@ app.use(cors())
 app.use(express.json())
 require("dotenv").config();
 
-mongoose.connect(process.env.MONGO_URI).then(function(){
+mongoose.connect(process.env.MONGO_URI).then(function () {
     console.log("Connected to DB")
-}).catch(function(){
+}).catch(function () {
     console.log("Failed to connect DB")
 })
 
 const credentials = mongoose.model("credentials", {}, "bulkmail")
 
-credentials.find().then(function(data){
+credentials.find().then(function (data) {
     const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -24,8 +24,8 @@ credentials.find().then(function(data){
             pass: data[0].toJSON().pass,
         }
     })
-    new Promise(async function(resolve, reject){
-        try{
+    new Promise(async function (resolve, reject) {
+        try {
             for (i = 0; i < mailList.length; i++) {
                 await transporter.sendMail({
                     from: "swetha040725@gmail.com",
@@ -37,19 +37,19 @@ credentials.find().then(function(data){
             }
             resolve("Success")
         }
-        catch{
+        catch {
             reject("Failed")
         }
-    }).then(function(){
+    }).then(function () {
         res.send(true)
-    }).catch(function(){
+    }).catch(function () {
         console.log(false)
     })
-}).catch(function(error){
+}).catch(function (error) {
     console.log(error)
 })
 
-app.listen(5000, function () {
+app.listen(process.env.PORT, function () {
     console.log("Server started...")
 })
 

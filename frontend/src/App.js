@@ -12,7 +12,7 @@ function App() {
   }
   function send() {
     setStatus(true)
-    axios.post("http://localhost:5000/sendmail", { msg: msg, mailList: mailList }).
+    axios.post(`${process.env.REACT_APP_API_URL}/sendmail`, { msg: msg, mailList: mailList }).
       then(function (data) {
         console.log(data.data)
         if (data.data == true) {
